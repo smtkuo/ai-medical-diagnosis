@@ -11,6 +11,12 @@ const API_CONFIG = {
 // API Request Function
 function makeApiRequest(data) {
     return new Promise((resolve, reject) => {
+        const apiKey = getApiKey();
+        if (!apiKey) {
+            reject(new Error('API key not found. Please enter and save your API key.'));
+            return;
+        }
+
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
 
@@ -28,13 +34,6 @@ function makeApiRequest(data) {
                 }
             }
         });
-
-        // Get API key from hash first, then localStorage
-        const apiKey = getApiKeyFromHash() || getApiKeyFromStorage();
-        if (!apiKey) {
-            reject(new Error('API key not found. Please enter and save your API key.'));
-            return;
-        }
 
         // Update state with current form values before making request
         const formData = {
@@ -77,17 +76,29 @@ function saveApiKey() {
     
     const apiKey = apiKeyInput.value.trim();
     if (apiKey) {
-        // Save to both localStorage and URL hash
-        setApiKeyInStorage(apiKey);
-        setApiKeyInHash(apiKey);
+        // Update both localStorage and state
+        localStorage.setItem('rapidApiKey', apiKey);
+        StateManager.updateState('inputs', 'apiKey', apiKey);
         showNotification('API key saved successfully', 'success');
     } else {
         showNotification('Please enter a valid API key', 'error');
     }
 }
 
+// Get API key - helper function to get the current API key
+function getApiKey() {
+    // Try to get from state first (URL hash), then localStorage
+    return StateManager.getState().inputs.apiKey || localStorage.getItem('rapidApiKey');
+}
+
 // API Functions
 async function searchMedicalInfo() {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        showNotification('Please enter and save your API key first', 'error');
+        return;
+    }
+
     const condition = document.getElementById('condition-input').value.trim();
     const selectedLanguage = document.getElementById('language-selector').value;
     
@@ -108,7 +119,7 @@ async function searchMedicalInfo() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-rapidapi-key': localStorage.getItem('rapidApiKey'),
+                'x-rapidapi-key': apiKey,
                 'x-rapidapi-host': 'ai-medical-diagnosis-api-symptoms-to-results.p.rapidapi.com'
             },
             body: JSON.stringify({
@@ -337,6 +348,12 @@ async function searchMedicalInfo() {
 }
 
 async function getHealthRecommendations() {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        showNotification('Please enter and save your API key first', 'error');
+        return;
+    }
+
     const selectedLanguage = document.getElementById('language-selector').value;
     const data = {
         activityLevel: document.getElementById('activity-level').value,
@@ -386,7 +403,7 @@ async function getHealthRecommendations() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-rapidapi-key': localStorage.getItem('rapidApiKey'),
+                'x-rapidapi-key': apiKey,
                 'x-rapidapi-host': 'ai-medical-diagnosis-api-symptoms-to-results.p.rapidapi.com'
             },
             body: JSON.stringify(data)
