@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Medical Diagnosis</title>
+    
+    <!-- External Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- Custom Scripts -->
+    <script src="config.js"></script>
+    <script src="api.js"></script>
+    <script src="ui.js"></script>
+    <script src="tags.js"></script>
+    <script src="validation.js"></script>
+    <script src="display.js"></script>
+    <script src="state-manager.js"></script>
+
+<style>
+  * {
+    font-family: "Inter", sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  .highlighted-section {
+    outline: 2px solid #3F20FB;
+    background-color: rgba(63, 32, 251, 0.1);
+  }
+
+  .edit-button {
+    position: absolute;
+    z-index: 1000;
+  }
+</style>
+</head>
+        <body class="h-full text-base-content">
+          <div id="medical-diagnosis-app" class="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 p-4 md:p-8">
+<div class="max-w-6xl mx-auto">
+<header id="header" class="flex justify-between items-center mb-8 bg-white rounded-2xl p-6 shadow-sm">
+<div class="flex items-center gap-3">
+  <i class="fa-solid fa-staff-snake text-blue-600 text-2xl"></i>
+  <h1 class="text-2xl font-bold text-gray-900">AI Medical Diagnosis | Symptoms to Results</h1>
+</div>
+<div class="flex gap-4">
+                    <div class="relative">
+                        <select id="language-selector" class="appearance-none bg-gray-100 text-gray-700 px-4 py-2 pr-8 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
+                            <option value="English">English</option>
+                            <option value="Turkish">Türkçe</option>
+                            <option value="Spanish">Español</option>
+                            <option value="French">Français</option>
+                            <option value="German">Deutsch</option>
+                            <option value="Italian">Italiano</option>
+                            <option value="Portuguese">Português</option>
+                            <option value="Russian">Русский</option>
+                            <option value="Chinese">中文</option>
+                            <option value="Japanese">日本語</option>
+                            <option value="Korean">한국어</option>
+                            <option value="Arabic">العربية</option>
+                            <option value="Hindi">हिन्दी</option>
+                            <option value="Bengali">বাংলা</option>
+                            <option value="Indonesian">Bahasa Indonesia</option>
+                            <option value="Malay">Bahasa Melayu</option>
+                            <option value="Thai">ไทย</option>
+                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="Dutch">Nederlands</option>
+                            <option value="Polish">Polski</option>
+                            <option value="Czech">Čeština</option>
+                            <option value="Greek">Ελληνικά</option>
+                            <option value="Hebrew">עברית</option>
+                            <option value="Romanian">Română</option>
+                            <option value="Hungarian">Magyar</option>
+                            <option value="Swedish">Svenska</option>
+                            <option value="Danish">Dansk</option>
+                            <option value="Finnish">Suomi</option>
+                            <option value="Norwegian">Norsk</option>
+                            <option value="Slovak">Slovenčina</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                    </div>
+  <a href="https://rapidapi.com/bilgisamapi-api2/api/ai-medical-diagnosis-api-symptoms-to-results" target="_blank" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+    <i class="fa-solid fa-key"></i>
+    Get API Key
+  </a>
+</div>
+</header>
+<div id="api-config" class="bg-white rounded-xl shadow-sm mb-8 p-6">
+<div class="flex items-center gap-2 mb-4">
+  <i class="fa-solid fa-gear text-gray-600"></i>
+  <h2 class="text-lg font-semibold">API Configuration</h2>
+</div>
+<div class="flex gap-4">
+  <div class="relative flex-1">
+    <input type="password" placeholder="Enter your RapidAPI key" class="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all pl-10" />
+    <i class="fa-solid fa-lock absolute left-3 top-3 text-gray-400"></i>
+  </div>
+                    <button id="save-api-key" onclick="saveApiKey()" class="px-6 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition-colors">Save Key</button>
+</div>
+</div>
+<div id="main-tabs" class="bg-white rounded-xl shadow-sm p-6">
+<div class="flex gap-2 border-b border-gray-200 mb-6">
+    <button data-tab="symptom-analysis" class="px-4 py-2 font-medium text-gray-600 hover:text-gray-800">
+    <i class="fa-solid fa-stethoscope mr-2"></i>Symptom Analysis
+  </button>
+    <button data-tab="medical-information" class="px-4 py-2 text-blue-600 border-b-2 border-blue-600">
+    <i class="fa-solid fa-book-medical mr-2"></i>Medical Information
+  </button>
+    <button data-tab="health-recommendations" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+    <i class="fa-solid fa-heart-pulse mr-2"></i>Health Recommendations
+  </button>
+</div>
+
+<!-- Tab Contents -->
+<div data-tab-content="symptom-analysis" class="tab-content">
+    <!-- Symptom Analysis Content -->
+<div id="symptoms-form" class="space-y-6">
+        <!-- Symptoms Section -->
+        <div class="space-y-3">
+            <label class="flex items-center gap-2 text-gray-700 font-medium">
+                <i class="fa-solid fa-list-check"></i>
+                Symptoms
+            </label>
+            <div class="flex flex-wrap gap-2 mb-2" id="selected-symptoms">
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">headache</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">fever</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">fatigue</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+            </div>
+            <input type="text" id="symptoms-input" placeholder="Enter symptoms (e.g., headache, fever)" 
+                   class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+  </div>
+
+        <!-- Patient Info Section -->
+        <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">Patient Information</h3>
+  <div class="grid grid-cols-2 gap-4">
+    <div class="relative">
+                    <input type="number" id="age-input" placeholder="Age" 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+      <i class="fa-solid fa-calendar absolute right-3 top-3.5 text-gray-400"></i>
+    </div>
+    <div class="relative">
+                    <select id="gender-input" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+        <option value="">Select Gender</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+        <option value="other">Other</option>
+      </select>
+      <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-gray-400"></i>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-4">
+    <div class="relative">
+                    <input type="number" id="height-input" placeholder="Height (cm)" 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+      <i class="fa-solid fa-ruler-vertical absolute right-3 top-3.5 text-gray-400"></i>
+    </div>
+    <div class="relative">
+                    <input type="number" id="weight-input" placeholder="Weight (kg)" 
+                           class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+      <i class="fa-solid fa-weight-scale absolute right-3 top-3.5 text-gray-400"></i>
+    </div>
+  </div>
+        </div>
+
+        <!-- Medical History Section -->
+  <div class="space-y-3">
+    <label class="flex items-center gap-2 text-gray-700 font-medium">
+      <i class="fa-solid fa-notes-medical"></i>
+      Medical History
+    </label>
+            <div class="flex flex-wrap gap-2 mb-2" id="selected-medical-history">
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">hypertension</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">diabetes</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+            </div>
+            <input type="text" id="medical-history-input" placeholder="Enter medical conditions (e.g., hypertension)" 
+                   class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+        </div>
+
+        <!-- Current Medications Section -->
+        <div class="space-y-3">
+            <label class="flex items-center gap-2 text-gray-700 font-medium">
+                <i class="fa-solid fa-pills"></i>
+                Current Medications
+            </label>
+            <div class="flex flex-wrap gap-2 mb-2" id="selected-medications">
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">lisinopril 10mg</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">metformin 500mg</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+            </div>
+            <input type="text" id="medications-input" placeholder="Enter current medications (e.g., lisinopril 10mg)" 
+                   class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+        </div>
+
+        <!-- Allergies Section -->
+        <div class="space-y-3">
+            <label class="flex items-center gap-2 text-gray-700 font-medium">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Allergies
+            </label>
+            <div class="flex flex-wrap gap-2 mb-2" id="selected-allergies">
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">penicillin</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+                <span class="tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                    <span class="tag-text">peanuts</span>
+                    <button type="button" class="remove-tag text-blue-600 hover:text-blue-800 transition-colors ml-1">&times;</button>
+                </span>
+            </div>
+            <input type="text" id="allergies-input" placeholder="Enter allergies (e.g., penicillin)" 
+                   class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+        </div>
+
+        <!-- Lifestyle Section -->
+        <div class="space-y-4">
+            <h3 class="font-medium text-gray-700">Lifestyle Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-gray-700 mb-2">Smoking Status</label>
+                    <select id="smoking-input" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                        <option value="false">Non-smoker</option>
+                        <option value="true">Smoker</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                </div>
+                <div class="relative">
+                    <label class="block text-gray-700 mb-2">Alcohol Consumption</label>
+                    <select id="alcohol-input" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                        <option value="none">None</option>
+                        <option value="occasional">Occasional</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="frequent">Frequent</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <label class="block text-gray-700 mb-2">Exercise Level</label>
+                    <select id="exercise-input" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                        <option value="sedentary">Sedentary</option>
+                        <option value="light">Light</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="active">Active</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                </div>
+                <div class="relative">
+                    <label class="block text-gray-700 mb-2">Diet Type</label>
+                    <select id="diet-input" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                        <option value="balanced">Balanced</option>
+                        <option value="vegetarian">Vegetarian</option>
+                        <option value="vegan">Vegan</option>
+                        <option value="keto">Keto</option>
+                        <option value="mixed">Mixed</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                </div>
+            </div>
+  </div>
+
+        <button id="analyze-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors font-medium">
+    <i class="fa-solid fa-microscope mr-2"></i>
+    Analyze Symptoms
+  </button>
+
+        <!-- Results Section -->
+        <div id="results" class="mt-8 space-y-6" style="display: none;">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check text-blue-600"></i>
+                    Analysis Results
+                </h3>
+                <button onclick="document.getElementById('results').style.display = 'none'" 
+                        class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="results-content"></div>
+        </div>
+</div>
+</div>
+
+<div data-tab-content="medical-information" class="tab-content">
+    <div id="medical-info" class="space-y-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-blue-800">Enter a medical condition to get detailed information.</p>
+        </div>
+        <div class="space-y-4">
+            <div class="relative">
+                <input type="text" id="condition-input" placeholder="Enter medical condition (e.g., hypertension)" 
+                       class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                <button onclick="searchMedicalInfo()" 
+                        class="absolute right-2 top-2 px-4 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Search
+                </button>
+            </div>
+            <div id="medical-info-results"></div>
+        </div>
+    </div>
+</div>
+
+<div data-tab-content="health-recommendations" class="tab-content">
+    <div id="health-recommendations" class="space-y-6">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-blue-800">Get personalized health recommendations based on your profile.</p>
+        </div>
+        <div class="space-y-6">
+            <!-- Health Profile Section -->
+            <div class="space-y-4">
+                <h3 class="font-medium text-gray-700">Health Profile</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Activity Level</label>
+                        <select id="activity-level" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                            <option value="sedentary">Sedentary</option>
+                            <option value="light">Light</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="active">Active</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Sleep Hours</label>
+                        <input type="number" id="sleep-hours" placeholder="Hours of sleep per night" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Stress Level</label>
+                        <select id="stress-level" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                            <option value="low">Low</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="high">High</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Exercise Frequency</label>
+                        <select id="exercise-frequency" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all appearance-none">
+                            <option value="none">None</option>
+                            <option value="1-2 times per week">1-2 times per week</option>
+                            <option value="3-4 times per week">3-4 times per week</option>
+                            <option value="5+ times per week">5+ times per week</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 bottom-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family History Section -->
+            <div class="space-y-4">
+                <h3 class="font-medium text-gray-700">Family History</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="family-diabetes" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Diabetes</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="family-heart-disease" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Heart Disease</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="family-cancer" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Cancer</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Vitals Section -->
+            <div class="space-y-4">
+                <h3 class="font-medium text-gray-700">Vitals</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Blood Pressure</label>
+                        <input type="text" id="blood-pressure" placeholder="e.g., 120/80" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                    </div>
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Resting Heart Rate</label>
+                        <input type="number" id="heart-rate" placeholder="BPM" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                    </div>
+                    <div class="relative">
+                        <label class="block text-gray-700 mb-2">Blood Sugar</label>
+                        <input type="number" id="blood-sugar" placeholder="mg/dL" 
+                               class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Goals Section -->
+            <div class="space-y-4">
+                <h3 class="font-medium text-gray-700">Health Goals</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="goal-weight" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Weight Management</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="goal-stress" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Stress Reduction</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="goal-bp" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Improve Blood Pressure</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="goal-diabetes" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Prevent Diabetes</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="goal-fitness" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        <span class="text-gray-700">Increase Fitness</span>
+                    </label>
+                </div>
+            </div>
+
+            <button id="get-recommendations" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors font-medium">
+                <i class="fa-solid fa-clipboard-list mr-2"></i>
+                Get Recommendations
+            </button>
+        </div>
+        <div id="recommendations-results"></div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize state manager
+            StateManager.initializeStateManager();
+        });
+    </script>
+        </body>
+      </html>
+    
