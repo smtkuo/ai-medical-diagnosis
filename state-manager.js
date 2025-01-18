@@ -1,61 +1,7 @@
-// API Key Management
-function getApiKeyFromHash() {
-    try {
-        const hash = window.location.hash.slice(1);
-        if (hash) {
-            const params = new URLSearchParams(atob(hash));
-            return params.get('apiKey');
-        }
-    } catch (error) {
-        console.error('Error getting API key from hash:', error);
-    }
-    return null;
-}
-
-function setApiKeyInHash(apiKey) {
-    try {
-        const currentHash = window.location.hash.slice(1);
-        let params;
-        if (currentHash) {
-            params = new URLSearchParams(atob(currentHash));
-        } else {
-            params = new URLSearchParams();
-        }
-        params.set('apiKey', apiKey);
-        const newHash = btoa(params.toString());
-        window.location.hash = newHash;
-    } catch (error) {
-        console.error('Error setting API key in hash:', error);
-    }
-}
-
-function getApiKeyFromStorage() {
-    return localStorage.getItem('rapidApiKey');
-}
-
-function setApiKeyInStorage(apiKey) {
-    localStorage.setItem('rapidApiKey', apiKey);
-}
-
-function initializeApiKey() {
-    const hashKey = getApiKeyFromHash();
-    const storageKey = getApiKeyFromStorage();
-    const apiKeyInput = document.querySelector('input[type="password"]');
-    
-    if (apiKeyInput) {
-        if (hashKey) {
-            apiKeyInput.value = hashKey;
-            setApiKeyInStorage(hashKey);
-        } else if (storageKey) {
-            apiKeyInput.value = storageKey;
-            setApiKeyInHash(storageKey);
-        }
-    }
-}
-
 // State object to hold all form inputs and API responses
 const state = {
     inputs: {
+        apiKey: '',  // Add API key to state
         symptoms: [],
         age: '',
         gender: '',
@@ -147,6 +93,10 @@ function updateState(category, field, value) {
             state.inputs[parent][child] = value;
         } else {
             state.inputs[field] = value;
+            // Handle API key specially
+            if (field === 'apiKey') {
+                localStorage.setItem('rapidApiKey', value);
+            }
         }
     } else if (category === 'responses') {
         state.responses[field] = value;
@@ -196,6 +146,11 @@ function loadStateFromURL() {
             // Deep merge the loaded state
             Object.keys(loadedState).forEach(category => {
                 if (category === 'inputs') {
+                    // Special handling for API key
+                    if (loadedState.inputs.apiKey) {
+                        state.inputs.apiKey = loadedState.inputs.apiKey;
+                        localStorage.setItem('rapidApiKey', loadedState.inputs.apiKey);
+                    }
                     // Special handling for tag arrays
                     const tagFields = ['symptoms', 'medicalHistory', 'currentMedications', 'allergies'];
                     tagFields.forEach(field => {
@@ -243,6 +198,18 @@ function loadStateFromURL() {
 
 // Function to populate form fields from state
 function populateFormFields() {
+    // Handle API key field
+    const apiKeyInput = document.querySelector('input[type="password"]');
+    if (apiKeyInput) {
+        // Try to get API key from state first (URL hash), then localStorage
+        const apiKey = state.inputs.apiKey || localStorage.getItem('rapidApiKey') || '';
+        apiKeyInput.value = apiKey;
+        if (apiKey && !state.inputs.apiKey) {
+            // If key was found in localStorage but not in state, update state
+            updateState('inputs', 'apiKey', apiKey);
+        }
+    }
+
     // Populate tag fields from state
     const tagFields = [
         { containerId: 'selected-symptoms', stateKey: 'symptoms', inputId: 'symptoms-input' },
@@ -672,7 +639,6 @@ function updateTabUI(activeTab) {
 
 // Initialize state management
 function initializeStateManager() {
-    initializeApiKey();
     if (loadStateFromURL()) {
         // State was loaded successfully
         console.log('State loaded from URL');

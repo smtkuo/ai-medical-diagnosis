@@ -15,6 +15,19 @@ window.tagHelpers = {
     getAllergies: () => {
         const container = document.getElementById('selected-allergies');
         return Array.from(container.querySelectorAll('.tag-text')).map(span => span.textContent.trim());
+    },
+    // Add update functions for each tag type
+    updateTagState: (type, tags) => {
+        const stateMapping = {
+            'symptoms': 'symptoms',
+            'medical-history': 'medicalHistory',
+            'medications': 'currentMedications',
+            'allergies': 'allergies'
+        };
+        const stateKey = stateMapping[type];
+        if (stateKey) {
+            StateManager.updateState('inputs', stateKey, tags);
+        }
     }
 };
 
@@ -25,15 +38,26 @@ function createTagInput(inputId, containerId, placeholder) {
     if (!input || !container) return null;
 
     const tags = new Set();
+    const type = containerId.replace('selected-', '');
 
-    // Initialize existing tags
-    container.querySelectorAll('.tag').forEach(tagElement => {
-        const tagText = tagElement.querySelector('.tag-text')?.textContent.trim() || '';
-        if (tagText) {
-            tags.add(tagText);
-            setupTagRemoval(tagElement, tagText, tags);
-        }
-    });
+    // Initialize tags from state only (no default tags)
+    const state = StateManager.getState();
+    const stateMapping = {
+        'symptoms': state.inputs.symptoms,
+        'medical-history': state.inputs.medicalHistory,
+        'medications': state.inputs.currentMedications,
+        'allergies': state.inputs.allergies
+    };
+
+    const stateTags = stateMapping[type] || [];
+    if (Array.isArray(stateTags)) {
+        stateTags.forEach(tag => {
+            if (tag) {
+                tags.add(tag);
+                addTagElement(tag, container, tags, type);
+            }
+        });
+    }
 
     // Handle input events
     input.addEventListener('keydown', (e) => {
@@ -41,7 +65,7 @@ function createTagInput(inputId, containerId, placeholder) {
             e.preventDefault();
             const value = input.value.trim().toLowerCase();
             if (value && !tags.has(value)) {
-                addTag(value, container, tags);
+                addTag(value, container, tags, type);
                 input.value = '';
             }
         }
@@ -56,18 +80,27 @@ function createTagInput(inputId, containerId, placeholder) {
 
     return {
         getTags: () => Array.from(tags),
-        addTag: (value) => addTag(value, container, tags),
+        addTag: (value) => addTag(value, container, tags, type),
         clear: () => {
             tags.clear();
             container.innerHTML = '';
             input.value = '';
+            window.tagHelpers.updateTagState(type, []);
         }
     };
 }
 
-function addTag(value, container, tags) {
+function addTag(value, container, tags, type) {
     if (!value || !container || !tags) return;
 
+    tags.add(value);
+    addTagElement(value, container, tags, type);
+    
+    // Update state
+    window.tagHelpers.updateTagState(type, Array.from(tags));
+}
+
+function addTagElement(value, container, tags, type) {
     const tag = document.createElement('span');
     tag.className = 'tag inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800';
     
@@ -86,76 +119,28 @@ function addTag(value, container, tags) {
         e.stopPropagation();
         tags.delete(value);
         tag.remove();
+        // Update state when tag is removed
+        window.tagHelpers.updateTagState(type, Array.from(tags));
     });
 
     tag.appendChild(tagText);
     tag.appendChild(removeButton);
     container.appendChild(tag);
-    tags.add(value);
-}
-
-function setupTagRemoval(tagElement, value, tags) {
-    const removeButton = tagElement.querySelector('button');
-    if (removeButton) {
-        // Remove existing event listeners
-        const newButton = removeButton.cloneNode(true);
-        removeButton.parentNode.replaceChild(newButton, removeButton);
-        
-        // Add new event listener
-        newButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (tags.has(value)) {
-                tags.delete(value);
-                tagElement.remove();
-            }
-        });
-    }
 }
 
 // Initialize tag inputs when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize tag inputs and setup removal for existing tags
     const tagContainers = ['selected-symptoms', 'selected-medical-history', 'selected-medications', 'selected-allergies'];
     
-    // Setup tag removal for existing tags
     tagContainers.forEach(containerId => {
         const container = document.getElementById(containerId);
         if (container) {
-            const tags = new Set();
+            // Clear any existing tags first
+            container.innerHTML = '';
             
-            // Initialize existing tags
-            container.querySelectorAll('.tag').forEach(tagElement => {
-                const tagText = tagElement.querySelector('.tag-text')?.textContent.trim() || '';
-                if (tagText) {
-                    tags.add(tagText);
-                    const removeButton = tagElement.querySelector('.remove-tag');
-                    if (removeButton) {
-                        removeButton.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            tags.delete(tagText);
-                            tagElement.remove();
-                        });
-                    }
-                }
-            });
-
-            // Setup input for new tags
-            const inputId = containerId.replace('selected-', '') + '-input';
-            const input = document.getElementById(inputId);
-            if (input) {
-                input.addEventListener('keydown', (e) => {
-                    if ((e.key === 'Enter' || e.key === ',') && !e.isComposing) {
-                        e.preventDefault();
-                        const value = input.value.trim().toLowerCase();
-                        if (value && !tags.has(value)) {
-                            addTag(value, container, tags);
-                            input.value = '';
-                        }
-                    }
-                });
-            }
+            const type = containerId.replace('selected-', '');
+            const inputId = `${type}-input`;
+            createTagInput(inputId, containerId);
         }
     });
 }); 
